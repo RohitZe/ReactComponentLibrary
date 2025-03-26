@@ -1,0 +1,43 @@
+#first{
+  background-color: green;
+  width: 400px;
+  height: 500px;
+}
+
+#card-component{
+  border: black solid 2px;
+  margin: 4px;
+  width: 210px;
+
+}
+.products-container{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+
+}
+.img-component{
+  width: 200px;
+  height: 200px;
+}
+.page-number-container{
+  text-align: center;
+  padding: 4px;
+  margin: 2px;
+}
+.page-number{
+  border: solid black 1px;
+  padding: 5px;
+  margin: 2px;
+  cursor: pointer;
+
+}
+#arrow{
+  padding: 4px;
+  font-size: larger;
+  margin: 2px;
+}
+.active
+{
+  background-color: aqua;
+}
