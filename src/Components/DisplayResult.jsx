@@ -1,46 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { disableSelection , setWinningNumber  } from '../State/numberSlice';
-
-const getWinningNumber = async (sessionId) => {
-  try {
-    const response = await fetch(`https://betting-backend-dq5j.onrender.com/session/${sessionId}`);
-    if (!response.ok) throw new Error('Failed to fetch winning number');
-    const data = await response.json();
-    return data.data.result;
-  } catch (error) {
-    console.error("API error:", error);
-    throw error;
-  }
-};
-
-const submitResultsToAPI = async (data) => {
-  const token = localStorage.getItem('token');
-  const { gameId, values } = data;
-
-  try {
-    const response = await fetch('https://betting-backend-dq5j.onrender.com/place-bet/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        gameId,
-        bets: Object.entries(values || {}).map(([choice, amount]) => ({
-          choice: String(choice),
-          amount: Number(amount)
-        }))
-      })
-    });
-
-    if (!response.ok) throw new Error('Bet submission failed');
-    return await response.json();
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
-};
+import { useDispatch, useSelector } from 'react-redux';
+import { disableSelection, setWinningNumber } from '../State/numberSlice';
+import { submitBets, fetchWinningNumber } from '../Services/api';
 
 export const DisplayResults = () => {
   const gameId = useSelector((state) => state.numbers.gameId);
@@ -61,7 +22,8 @@ export const DisplayResults = () => {
         dispatch(disableSelection());
         
         try {
-          const result = await submitResultsToAPI({ gameId, values: values || {} });
+          const token = localStorage.getItem('token');
+          const result = await submitBets(gameId, values || {}, token);
           setSessionId(result.data.sessionId);
         } catch (err) {
           setError('Bet submission failed');
@@ -70,21 +32,20 @@ export const DisplayResults = () => {
           setLoading(prev => ({ ...prev, submit: false }));
         }
       }
-    }, 60000); // 40 seconds
+    }, 60000); 
 
     return () => clearTimeout(submitTimer);
   }, [dispatch, isTimerActive, gameId, values]);
 
-  // Get winning number after 30 seconds (runs independently)
+ 
   useEffect(() => {
     const winningTimer = setTimeout(async () => {
       if (sessionId) { // Only run if we have a session ID
         setLoading(prev => ({ ...prev, winning: true }));
         try {
-          const number = await getWinningNumber(sessionId);
+          const number = await fetchWinningNumber(sessionId);
           setWinningNum(number);
           dispatch(setWinningNumber(number));
-          
         } catch (err) {
           setError('Failed to get winning number');
           console.error(err);
@@ -92,10 +53,10 @@ export const DisplayResults = () => {
           setLoading(prev => ({ ...prev, winning: false }));
         }
       }
-    }, 61000); // 30 seconds
+    }, 61000); 
 
     return () => clearTimeout(winningTimer);
-  }, [sessionId]); // Only re-run when sessionId changes
+  }, [sessionId, dispatch]);
 
   return (
     <div className="p-4">
